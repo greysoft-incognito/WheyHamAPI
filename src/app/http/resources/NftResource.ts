@@ -1,22 +1,29 @@
-import { JsonResource } from '@core/JsonApiResource';
-
+import { Resource } from "resora";
+import { ethers } from "ethers"
 /**
  * NftResource
  */
-export default class extends JsonResource {
+export default class extends Resource {
     /**
      * Build the response object
      * @returns this
      */
     data () {
+        const metadata = JSON.parse(this.metadata);
+
         return {
             id: this.id,
             name: this.name,
-            identifier: this.identifier,
+            price: this.nftOrder ? ethers.formatEther(BigInt(this.nftOrder.price)) : null,
+            status: this.nftOrder ? this.nftOrder.status : 'UNKNOWN',
             contract: this.contract,
             imageUrl: this.imageUrl,
+            orderHash: this.nftOrder ? this.nftOrder.orderHash : null,
+            identifier: this.identifier,
+            openseaUrl: metadata.opensea_url || null,
             description: this.description,
-            openseaUrl: JSON.parse(this.metadata).opensea_url || null,
+            remainingQuantity: this.nftOrder ? this.nftOrder.remainingQuantity : null,
+            metadata
         };
     }
 }

@@ -1,3 +1,5 @@
+import { NftOrderStatus, Prisma } from "@prisma/client";
+
 import Application from "src/core/app";
 import { Command } from "@h3ravel/musket";
 import { prisma } from "src/core/DB";
@@ -23,6 +25,8 @@ export class SyncNfts extends Command<Application> {
         this.info(`Fetched ${nfts.length} NFTs for collection ${slug}`);
         this.info(`Storing NFTs in the database...`);
 
+        await prisma.nft.deleteMany()
+
         const create = await prisma.nft.createMany({
             data: nfts.map(nft => ({
                 name: nft.name,
@@ -31,10 +35,37 @@ export class SyncNfts extends Command<Application> {
                 description: nft.description,
                 imageUrl: nft.image_url,
                 metadata: JSON.stringify(nft),
-            })),
+            } as Prisma.NftCreateManyInput)),
             skipDuplicates: true,
         });
 
         this.success(`Synchronized ${create.count} NFTs`);
+
+        const savedNfts = await prisma.nft.findMany();
+
+        await prisma.nftOrder.deleteMany()
+
+        for (const nft of savedNfts) {
+            const [order] = await this.app.services.nft.fetchNftOrders({
+                address: nft.contract, ids: [nft.identifier], debug, walk, limit: 1
+            });
+
+            await prisma.nftOrder.createMany({
+                data: order ? [{
+                    nftId: nft.id,
+                    price: BigInt(order.current_price),
+                    orderHash: order.order_hash,
+                    status: order.status as NftOrderStatus,
+                    listedAt: order.listing_time ? new Date(order.listing_time) : null,
+                    expiresAt: order.expiration_time ? new Date(order.expiration_time) : null,
+                    remainingQuantity: order.remaining_quantity ? parseInt(order.remaining_quantity, 10) : null,
+                } as Prisma.NftOrderCreateManyInput] : [],
+                skipDuplicates: true,
+            });
+        }
+
+        const ordersCount = await prisma.nftOrder.count();
+
+        this.success(`Synchronized ${ordersCount} NFT orders`);
     }
 }

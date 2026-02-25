@@ -17,8 +17,8 @@ model Configuration {
   id        String   @id @default(uuid())
   key       String   @unique // One response per review
   value     String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("configurations")
 }
@@ -28,17 +28,17 @@ model User {
   id                    String    @id @default(uuid())
   email                 String    @unique
   password              String
-  firstName             String
-  lastName              String
+  firstName             String    @map("first_name")
+  lastName              String    @map("last_name")
   avatar                String?
   bio                   String?
   phone                 String?
-  googleId              String?   @db.VarChar(255)
-  facebookId            String?   @db.VarChar(255)
-  emailVerifiedAt       DateTime?
-  emailVerificationCode String?   @db.VarChar(64)
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @updatedAt
+  googleId              String?   @map("google_id") @db.VarChar(255)
+  facebookId            String?   @map("facebook_id") @db.VarChar(255)
+  emailVerifiedAt       DateTime? @map("email_verified_at")
+  emailVerificationCode String?   @map("email_verification_code") @db.VarChar(64)
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
 
   // Relations
   personalAccessTokens PersonalAccessToken[] @relation("TokenUser")
@@ -57,8 +57,8 @@ model PersonalAccessToken {
   abilities  Json?
   lastUsedAt DateTime?
   expiresAt  DateTime?
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
 
   // Relations
   user User @relation("TokenUser", fields: [userId], references: [id], onDelete: Cascade)
@@ -69,15 +69,43 @@ model PersonalAccessToken {
 
 // NFT model
 model Nft {
-  id          String   @id @default(uuid())
+  id          String    @id @default(uuid())
   name        String
-  identifier  String   @unique
+  identifier  String    @unique
   contract    String
   description String?
-  imageUrl    String?
+  imageUrl    String?   @map("image_url")
   metadata    Json?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime? @default(now()) @map("created_at")
+  updatedAt   DateTime? @updatedAt @map("updated_at")
+  nftOrder    NftOrder?
 
   @@map("nfts")
+}
+
+enum NftOrderStatus {
+  ACTIVE
+  INACTIVE
+  FULFILLED
+  EXPIRED
+  CANCELLED
+}
+
+model NftOrder {
+  id                String         @id @default(uuid())
+  nftId             String         @unique @map("nft_id")
+  price             BigInt         @map("price")
+  status            NftOrderStatus
+  orderHash         String         @unique @map("order_hash")
+  listedAt          DateTime?      @map("listed_at")
+  expiresAt         DateTime?      @map("expires_at")
+  createdAt         DateTime?      @default(now()) @map("created_at")
+  updatedAt         DateTime?      @updatedAt @map("updated_at")
+  remainingQuantity Int            @default(1) @map("remaining_quantity")
+
+  // Relations
+  nft Nft @relation(fields: [nftId], references: [id], onDelete: Cascade)
+
+  @@index([nftId])
+  @@map("nft_orders")
 }

@@ -1,22 +1,18 @@
-import { JsonResource, Resource } from '@core/JsonApiResource';
-
+import { Nft } from '@prisma/client';
 import NftResource from './NftResource';
+import { ResourceCollection } from 'resora';
 
 /**
  * NftCollection
  */
-export default class extends JsonResource {
+export default class extends ResourceCollection<{ data: Nft[], pagination: any }> {
+    collects = NftResource
+
     /**
      * Build the response object
      * @returns this
      */
     data () {
-        const data = Array.isArray(this.resource) ? this.resource : this.resource.data
-
-        return {
-            data: data.map(
-                (e: Resource) => new NftResource(this.event, e).data()
-            )
-        }
+        return this.toArray()
     }
 }
