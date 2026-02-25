@@ -1,4 +1,5 @@
 import BaseController from '@controllers/BaseController';
+import { HTTPError } from 'h3';
 import { HttpContext } from 'clear-router/types/h3'
 import NftCollection from '../resources/NftCollection';
 import NftResource from '../resources/NftResource';
@@ -36,9 +37,15 @@ export default class extends BaseController {
     show = async ({ res, context }: HttpContext) => {
         const data = await prisma.nft.findUnique({
             where: {
-                id: context.params!.id
+                id: context.params?.id,
+                contract: context.params?.contract,
+                identifier: context.params?.identifier,
             }
-        }) ?? {};
+        });
+
+        if (!data) {
+            throw new HTTPError("NFT Not Found", { status: 404, statusText: "Not Found" });
+        }
 
         // @ts-ignore
         return new NftResource(data, res).additional({
