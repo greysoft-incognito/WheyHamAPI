@@ -14,7 +14,7 @@ export default class extends Resource {
         return {
             id: this.id,
             name: this.name,
-            price: this.nftOrder ? ethers.formatEther(BigInt(this.nftOrder.price)) : null,
+            price: this.nftOrder ? ethers.formatEther(BigInt(this.nftOrder.price)) : 0,
             status: this.nftOrder ? this.nftOrder.status : 'UNKNOWN',
             contract: this.contract,
             imageUrl: this.imageUrl,
@@ -22,7 +22,7 @@ export default class extends Resource {
             identifier: this.identifier,
             openseaUrl: metadata.opensea_url || null,
             description: this.description,
-            remainingQuantity: this.nftOrder ? this.nftOrder.remainingQuantity : null,
+            remainingQuantity: this.nftOrder ? this.nftOrder.remainingQuantity : 0,
             metadata
         };
     }
